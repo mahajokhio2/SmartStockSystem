@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartStock Management Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #333;
+        }
+
+        .sensor-data, .restock-notification {
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .sensor-data span, .restock-notification span {
+            font-weight: bold;
+        }
+    </style>
+    <!-- Load MQTT.js -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>SmartStock Management Dashboard</h1>
+
+        <div class="section">
+            <h2>Real-Time Sensor Updates</h2>
+            <div id="sensor-updates">
+                <p>No sensor data yet...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Restock Notifications</h2>
+            <div id="restock-notifications">
+                <p>No restock notifications yet...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const client = mqtt.connect('wss://broker.hivemq.com:8000/mqtt');
+
+client.on('connect', function () {
+    console.log('Connected to MQTT broker');
+    client.subscribe('inventory/stock');
+    client.subscribe('restock/notification');
+});
+
+client.on('message', function (topic, message) {
+    const data = JSON.parse(message.toString());
+
+    if (topic === 'inventory/stock') {
+        const sensorUpdatesDiv = document.getElementById('sensor-updates');
+        const sensorDataHtml = `
+            <div class="sensor-data">
+                <p><span>Sensor ID:</span> ${data.sensorId}</p>
+                <p><span>Item ID:</span> ${data.itemId}</p>
+                <p><span>Quantity:</span> ${data.quantity}</p>
+                <p><span>Location:</span> ${data.location}</p>
+                <p><span>Timestamp:</span> ${data.timestamp}</p>
+            </div>
+        `;
+        sensorUpdatesDiv.insertAdjacentHTML('afterbegin', sensorDataHtml);
+    } else if (topic === 'restock/notification') {
+        const restockNotificationsDiv = document.getElementById('restock-notifications');
+        const restockNotificationHtml = `
+            <div class="restock-notification">
+                <p><span>Item ID:</span> ${data.itemId}</p>
+                <p><span>Message:</span> ${data.message}</p>
+            </div>
+        `;
+        restockNotificationsDiv.insertAdjacentHTML('afterbegin', restockNotificationHtml);
+    }
+});
+    </script>
+</body>
+</html>
+
